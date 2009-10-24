@@ -1,0 +1,19 @@
+name:                pointful
+version:             1.0
+
+synopsis:            Pointful refactoring tool
+
+description:         Stand-alone command-line version of the pointful plugin
+                     for lambdabot.
+
+category:            Development
+license:             BSD3
+license-file:        LICENSE
+author:              Mikhail Glushenkov
+maintainer:          the.dead.shall.rise@gmail.com
+build-depends:       base >= 2 && < 5, containers, haskell-src, mtl
+build-type:          Simple
+
+executable:          pointful
+main-is:             Pointful.hs
+ghc-options:
