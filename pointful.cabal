@@ -1,5 +1,5 @@
 name:                pointful
-version:             1.0.1
+version:             1.0.2
 
 synopsis:            Pointful refactoring tool
 
@@ -13,9 +13,7 @@ author:              Mikhail Glushenkov
 maintainer:          the.dead.shall.rise@gmail.com
 build-depends:       base >= 2 && < 5, containers, haskell-src, mtl
 build-type:          Simple
-extra-source-files:  Lambdabot/Pointful.hs
-                     , Lambdabot/FixPrecedence.hs
-                     , Lambdabot/Parser.hs
+extra-source-files:  Lambdabot/*.hs
 
 executable:          pointful
 main-is:             Pointful.hs
