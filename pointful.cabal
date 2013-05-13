@@ -4,7 +4,7 @@ version:             1.0.3
 synopsis:            Pointful refactoring tool
 
 description:         Stand-alone command-line version of the pointful plugin
-                     for lambdabot.
+                     for Lambdabot.
 
 category:            Development
 license:             BSD3
