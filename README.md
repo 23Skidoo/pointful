@@ -1,7 +1,7 @@
 pointful
 ========
 
-Stand-alone command-line version of the pointful plugin for lambdabot.
+Stand-alone command-line version of the pointful plugin for Lambdabot.
 
 This tool transforms Haskell expressions from the implicit pointfree style to the explicit pointful style. This makes it easier to understand such expressions.
 
