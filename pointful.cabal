@@ -19,6 +19,14 @@ cabal-version:       >= 1.6
 Flag separateSYB
   Description: Data.Generics available in separate package.
 
+Library
+    exposed-modules:     Lambdabot.Pointful
+    build-depends:       containers, haskell-src, mtl
+    if flag(separateSYB)
+       build-Depends: base >= 4 && < 5, syb
+    else
+       build-Depends: base >= 3 && < 4
+
 Executable          pointful
     main-is:             Pointful.hs
     build-depends:       containers, haskell-src, mtl
