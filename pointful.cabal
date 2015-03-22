@@ -1,5 +1,5 @@
 name:                pointful
-version:             1.0.2
+version:             1.0.4
 
 synopsis:            Pointful refactoring tool
 
@@ -12,6 +12,7 @@ license-file:        LICENSE
 author:              Mikhail Glushenkov
 maintainer:          Mikhail Glushenkov <the.dead.shall.rise@gmail.com>
 homepage:            http://github.com/23Skidoo/pointful
+bug-reports:         http://github.com/23Skidoo/pointful/issues
 build-type:          Simple
 extra-source-files:  Lambdabot/*.hs
 cabal-version:       >= 1.6
@@ -26,3 +27,7 @@ Executable          pointful
        build-Depends: base >= 4 && < 5, syb
     else
        build-Depends: base >= 3 && < 4
+
+Source-Repository head
+  type:     git
+  location: https://github.com/23Skidoo/pointful.git
