@@ -4,6 +4,6 @@ sudo: false
 ghc:
   - 7.8
 
-before_script:
-  - cabal update
+install:
   - cabal install happy
+  - cabal install --only-dependencies --enable-tests
