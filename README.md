@@ -1,5 +1,4 @@
-pointful
-========
+# pointful [![Build Status](https://secure.travis-ci.org/23Skidoo/pointful.png?branch=master)](http://travis-ci.org/23Skidoo/pointful)
 
 Stand-alone command-line version of the pointful plugin for Lambdabot.
 
