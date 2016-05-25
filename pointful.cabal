@@ -1,5 +1,5 @@
 name:                pointful
-version:             1.0.7
+version:             1.0.8
 
 synopsis:            Pointful refactoring tool
 
@@ -9,7 +9,7 @@ description:         Stand-alone command-line version of the pointful plugin
 category:            Development
 license:             BSD3
 license-file:        LICENSE
-author:              Thomas Jäger et al.
+author:              Thomas Jäger, Bertram Felgenhauer, James Cook et al.
 maintainer:          Mikhail Glushenkov <mikhail.glushenkov@gmail.com>
 homepage:            http://github.com/23Skidoo/pointful
 build-type:          Simple
