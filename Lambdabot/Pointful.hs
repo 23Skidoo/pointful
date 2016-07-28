@@ -303,3 +303,17 @@ optimize = stabilize optimizeOnce
 
 pointful :: String -> String
 pointful = withParsed (stabilize (optimize . uncomb) . stabilize (unfoldCombinators . uncomb))
+
+-- TODO: merge this into a proper test suite once one exists
+-- test s = case parseModule s of
+--   f@(ParseFailed _ _) -> fail (show f)
+--   ParseOk (Hs.Module _ _ _ _ _ _ defs) ->
+--     flip mapM_ defs $ \def -> do
+--       putStrLn . prettyPrintInLine  $ def
+--       putStrLn . prettyPrintInLine  . uncomb $ def
+--       putStrLn . prettyPrintInLine  . optimize . uncomb $ def
+--       putStrLn . prettyPrintInLine  . stabilize (optimize . uncomb) $ def
+--       putStrLn ""
+--
+-- main = test "f = tail . head; g = head . tail; h = tail + tail; three = g . h . i; dontSub = (\\x -> x + x) 1; ofHead f = f . head; fm = flip mapM_ xs (\\x -> g x); po = (+1); op = (1+); g = (. f); stabilize = fix (ap . flip (ap . (flip =<< (if' .) . (==))) =<<)"
+--
