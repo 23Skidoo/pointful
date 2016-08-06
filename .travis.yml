@@ -1,8 +1,7 @@
 language: haskell
 sudo: false
 
-ghc:
-  - 7.10
+ghc: 7.10
 
 install:
   - cabal install happy
