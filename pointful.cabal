@@ -1,5 +1,5 @@
 name:                pointful
-version:             1.0.8
+version:             1.0.9
 
 synopsis:            Pointful refactoring tool
 
@@ -13,24 +13,20 @@ author:              Thomas Jäger, Bertram Felgenhauer, James Cook et al.
 maintainer:          Mikhail Glushenkov <mikhail.glushenkov@gmail.com>
 homepage:            http://github.com/23Skidoo/pointful
 build-type:          Simple
-extra-source-files:  Lambdabot/*.hs
-cabal-version:       >= 1.6
+cabal-version:       >= 1.8
 
 Library
     exposed-modules:     Lambdabot.Pointful
     other-modules:       Lambdabot.Parser
     build-depends:       base >= 4.4 && < 5,
                          containers >= 0.4,
-                         haskell-src-exts >= 1.17.0 && < 1.18,
+                         haskell-src-exts-simple >= 1.18.0 && < 1.19,
                          mtl >= 2,
                          syb >= 0.3,
                          transformers >= 0.2
 
 Executable               pointful
+    hs-source-dirs:      main
     main-is:             Pointful.hs
     build-depends:       base >= 4.4 && < 5,
-                         containers >= 0.4,
-                         haskell-src-exts >= 1.17.0,
-                         mtl >= 2,
-                         syb >= 0.3,
-                         transformers >= 0.2
+                         pointful == 1.0.9
