@@ -1,5 +1,5 @@
 name:                pointful
-version:             1.0.11
+version:             1.0.11.0
 
 synopsis:            Pointful refactoring tool
 
@@ -14,8 +14,19 @@ maintainer:          Mikhail Glushenkov <mikhail.glushenkov@gmail.com>
 homepage:            http://github.com/23Skidoo/pointful
 build-type:          Simple
 cabal-version:       2.0
+extra-source-files:  README.md
+                     CHANGELOG.md
 tested-with:         GHC == 7.8.4, GHC == 7.10.3,
                      GHC == 8.0.2, GHC == 8.2.2, GHC == 8.4.1
+
+Source-repository head
+  type:     git
+  location: https://github.com/23Skidoo/pointful.git
+
+Source-repository this
+  type:     git
+  location: https://github.com/23Skidoo/pointful.git
+  tag:      pointful-1.0.11.0
 
 Library
     default-language:    Haskell2010
