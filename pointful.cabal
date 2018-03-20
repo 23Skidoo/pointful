@@ -22,7 +22,7 @@ Library
     other-modules:       Lambdabot.Parser
     build-depends:       base >= 4.4 && < 5,
                          containers >= 0.4,
-                         haskell-src-exts-simple >= 1.18.0 && < 1.20,
+                         haskell-src-exts-simple >= 1.18.0 && < 1.21,
                          mtl >= 2,
                          syb >= 0.3,
                          transformers >= 0.2
