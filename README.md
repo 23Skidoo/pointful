@@ -1,4 +1,4 @@
-# pointful [![Build Status](https://secure.travis-ci.org/23Skidoo/pointful.png?branch=master)](http://travis-ci.org/23Skidoo/pointful)
+# pointful [![Hackage version](https://img.shields.io/hackage/v/pointful.svg?label=Hackage)](https://hackage.haskell.org/package/pointful) [![Stackage version](https://www.stackage.org/package/pointful/badge/lts?label=Stackage)](https://www.stackage.org/package/pointful) [![Build Status](https://secure.travis-ci.org/23Skidoo/pointful.png?branch=master)](http://travis-ci.org/23Skidoo/pointful)
 
 Stand-alone command-line version of the pointful plugin for Lambdabot.
 
