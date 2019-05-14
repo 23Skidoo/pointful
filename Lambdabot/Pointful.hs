@@ -1,6 +1,7 @@
+{-# LANGUAGE LambdaCase          #-}
+{-# LANGUAGE PatternSynonyms     #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE PatternSynonyms #-}
-{-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE ViewPatterns        #-}
 -- Undo pointfree transformations. Plugin code derived from Pl.hs.
 module Lambdabot.Pointful (pointful) where
 
@@ -176,7 +177,8 @@ optimizeD (PatBind (PVar fname) (UnGuardedRhs (Lambda pats rhs)) Nothing) =
         rhs' = substAvoiding subst bv rhs
     in  FunBind [Match fname pats' (UnGuardedRhs rhs') Nothing]
 ---- combine function binding and lambda
-optimizeD (FunBind [Match fname pats1 (UnGuardedRhs (Lambda pats2 rhs)) Nothing]) =
+optimizeD (FunBind
+           [Match fname pats1 (UnGuardedRhs (Lambda pats2 rhs)) Nothing]) =
     let (subst, bv, pats2') = renameBinds M.empty (varsBoundHere pats1) pats2
         rhs' = substAvoiding subst bv rhs
     in  FunBind [Match fname (pats1 ++ pats2') (UnGuardedRhs rhs') Nothing]
@@ -188,13 +190,18 @@ optimizeRhs (UnGuardedRhs (Paren x)) = UnGuardedRhs x
 optimizeRhs x = x
 
 optimizeE :: Exp -> Exp
--- apply ((\x z -> ...x...) y) yielding (\z -> ...y...) if there is only one x or y is simple
+-- apply ((\x z -> ...x...) y) yielding (\z -> ...y...) if there is
+-- only one x or y is simple
 optimizeE (App (Lambda (PVar ident : pats) body) arg) | single || simple arg =
-     let (subst, bv, pats') = renameBinds (M.singleton ident arg) (freeVars arg) pats
+     let (subst, bv, pats') =
+           renameBinds (M.singleton ident arg) (freeVars arg) pats
      in  Paren (Lambda pats' (substAvoiding subst bv body))
   where
     single = countOcc ident body <= 1
-    simple e = case e of Var _ -> True; Lit _ -> True; Paren e' -> simple e'; _ -> False
+    simple = \case Var _    -> True
+                   Lit _    -> True
+                   Paren e' -> simple e'
+                   _        -> False
 -- apply ((\_ z -> ...) y) yielding (\z -> ...)
 optimizeE (App (Lambda (PWildCard : pats) body) _) =
     Paren (Lambda pats body)
@@ -266,10 +273,12 @@ uncomb' (App (Var (UnQual (Symbol ">>="))) (Paren lam@Lambda{})) =
    let a = freshNameAvoiding (Ident "a") (freeVars lam)
        b = freshNameAvoiding (Ident "b") (freeVars lam)
    in  (Paren (Lambda [PVar a, PVar b]
-           (App (App (Var (UnQual a)) (Paren (App lam (Var (UnQual b))))) (Var (UnQual b)))))
+           (App (App (Var (UnQual a))
+                 (Paren (App lam (Var (UnQual b))))) (Var (UnQual b)))))
 -- rewrite: ((>>=) e1) (\x y -> e2)
 -- to:      (\a -> (\x y -> e2) (e1 a) a)
-uncomb' (App (App (Var (UnQual (Symbol ">>="))) e1) (Paren lam@(Lambda (_:_:_) _))) =
+uncomb' (App (App (Var (UnQual (Symbol ">>="))) e1)
+         (Paren lam@(Lambda (_:_:_) _))) =
     let a = freshNameAvoiding (Ident "a") (freeVars [e1,lam])
     in  (Paren (Lambda [PVar a]
             (App (App lam (App e1 (Var (UnQual a)))) (Var (UnQual a)))))
@@ -321,12 +330,16 @@ uncomb :: (Eq a, Data a) => a -> a
 uncomb = stabilize uncombOnce
 
 optimizeOnce :: (Data a) => a -> a
-optimizeOnce x = everywhere (mkT optimizeD `extT` optimizeRhs `extT` optimizeE) x
+optimizeOnce x = everywhere
+                 (mkT optimizeD `extT` optimizeRhs `extT` optimizeE) x
+
 optimize :: (Eq a, Data a) => a -> a
 optimize = stabilize optimizeOnce
 
 pointful :: String -> String
-pointful = withParsed (stabilize (optimize . uncomb) . stabilize (unfoldCombinators . uncomb))
+pointful =
+  withParsed
+  (stabilize (optimize . uncomb) . stabilize (unfoldCombinators . uncomb))
 
 -- TODO: merge this into a proper test suite once one exists
 -- test s = case parseModule s of
