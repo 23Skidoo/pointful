@@ -4,17 +4,17 @@
 -- Undo pointfree transformations. Plugin code derived from Pl.hs.
 module Lambdabot.Pointful (pointful) where
 
-import Lambdabot.Parser (withParsed, prettyPrintInLine)
+import Lambdabot.Parser (withParsed)
 
+import Prelude hiding (sum, exp)
 import Control.Monad.Reader
 import Control.Monad.State
-import Data.Functor.Identity (Identity)
 import Data.Generics
 import qualified Data.Set as S
 import qualified Data.Map as M
-import Data.List
+import Data.List hiding (sum)
 import Data.Maybe
-import Language.Haskell.Exts.Simple as Hs
+import Language.Haskell.Exts.Simple as Hs hiding (alt, name, var)
 
 ---- Utilities ----
 
@@ -23,19 +23,22 @@ stabilize f x = let x' = f x in if x' == x then x else stabilize f x'
 
 -- varsBoundHere returns variables bound by top patterns or binders
 varsBoundHere :: Data d => d -> S.Set Name
-varsBoundHere (cast -> Just (PVar name)) = S.singleton name
+varsBoundHere (cast -> Just (PVar name))        = S.singleton name
 varsBoundHere (cast -> Just (Match name _ _ _)) = S.singleton name
-varsBoundHere (cast -> Just (PatBind pat _ _)) = varsBoundHere pat
-varsBoundHere (cast -> Just (_ :: Exp)) = S.empty
-varsBoundHere d = S.unions (gmapQ varsBoundHere d)
+varsBoundHere (cast -> Just (PatBind pat _ _))  = varsBoundHere pat
+varsBoundHere (cast -> Just (_ :: Exp))         = S.empty
+varsBoundHere d                                 = S.unions
+                                                  (gmapQ varsBoundHere d)
 
 -- note: the tempting idea of using a pattern synonym for the frequent
 -- (cast -> Just _) patterns causes compiler crashes with ghc before
 -- version 8; cf. https://ghc.haskell.org/trac/ghc/ticket/11336
 
-foldFreeVars :: forall a d. Data d => (Name -> S.Set Name -> a) -> ([a] -> a) -> d -> a
+foldFreeVars
+  :: forall a d. Data d
+  => (Name -> S.Set Name -> a) -> ([a] -> a) -> d -> a
 foldFreeVars var sum e = runReader (go e) S.empty where
-    go :: forall d. Data d => d -> Reader (S.Set Name) a
+    go :: forall d'. Data d' => d' -> Reader (S.Set Name) a
     go (cast -> Just (Var (UnQual name))) =
         asks (var name)
     go (cast -> Just (Lambda ps exp)) =
@@ -53,12 +56,15 @@ foldFreeVars var sum e = runReader (go e) S.empty where
     collect :: forall m. Monad m => [m a] -> m a
     collect ms = sum `liftM` sequence ms
 
-    bind :: forall a b. Ord a => [S.Set a] -> Reader (S.Set a) b -> Reader (S.Set a) b
+    bind
+      :: forall a' b. Ord a'
+      => [S.Set a'] -> Reader (S.Set a') b -> Reader (S.Set a') b
     bind ss = local (S.unions ss `S.union`)
 
 -- return free variables
 freeVars :: Data d => d -> S.Set Name
-freeVars = foldFreeVars (\name bv -> S.singleton name `S.difference` bv) S.unions
+freeVars =
+  foldFreeVars (\name bv -> S.singleton name `S.difference` bv) S.unions
 
 -- return number of free occurrences of a variable
 countOcc :: Data d => Name -> d -> Int
@@ -68,71 +74,85 @@ countOcc name = foldFreeVars var sum where
 
 -- variable capture avoiding substitution
 substAvoiding :: Data d => M.Map Name Exp -> S.Set Name -> d -> d
-substAvoiding subst bv = base `extT` exp `extT` alt `extT` decl `extT` match where
+substAvoiding subst bv =
+  base `extT` exp `extT` alt `extT` decl `extT` match
+
+  where
     base :: Data d => d -> d
     base = gmapT (substAvoiding subst bv)
 
     exp e@(Var (UnQual name)) =
         fromMaybe e (M.lookup name subst)
-    exp (Lambda ps exp) =
+    exp (Lambda ps exp') =
         let (subst', bv', ps') = renameBinds subst bv ps
-        in  Lambda ps' (substAvoiding subst' bv' exp)
-    exp (Let bs exp) =
+        in  Lambda ps' (substAvoiding subst' bv' exp')
+    exp (Let bs exp') =
         let (subst', bv', bs') = renameBinds subst bv bs
-        in  Let (substAvoiding subst' bv' bs') (substAvoiding subst' bv' exp)
+        in  Let (substAvoiding subst' bv' bs') (substAvoiding subst' bv' exp')
     exp d = base d
 
-    alt (Alt pat exp bs) =
+    alt (Alt pat exp' bs) =
         let (subst1, bv1, pat') = renameBinds subst bv pat
-            (subst', bv', bs') = renameBinds subst1 bv1 bs
-        in  Alt pat' (substAvoiding subst' bv' exp) (substAvoiding subst' bv' bs')
+            (subst', bv', bs')  = renameBinds subst1 bv1 bs
+        in  Alt pat'
+            (substAvoiding subst' bv' exp') (substAvoiding subst' bv' bs')
+    alt _                = error "unexpected"
 
-    decl (PatBind pat exp bs) =
-        let (subst', bv', bs') = renameBinds subst bv bs in
-        PatBind pat (substAvoiding subst' bv' exp) (substAvoiding subst' bv' bs')
+    decl (PatBind pat exp' bs) =
+        let (subst', bv', bs') = renameBinds subst bv bs
+        in PatBind
+           pat (substAvoiding subst' bv' exp') (substAvoiding subst' bv' bs')
     decl d = base d
 
-    match (Match name ps exp bs) =
+    match (Match name ps exp' bs) =
         let (subst1, bv1, ps') = renameBinds subst bv ps
             (subst', bv', bs') = renameBinds subst1 bv1 bs
-        in  Match name ps' (substAvoiding subst' bv' exp) (substAvoiding subst' bv' bs')
+        in  Match name ps'
+            (substAvoiding subst' bv' exp') (substAvoiding subst' bv' bs')
+    match _                      = error "unexpected"
 
 -- rename local binders (but not the nested expressions)
-renameBinds :: Data d => M.Map Name Exp -> S.Set Name -> d -> (M.Map Name Exp, S.Set Name, d)
+renameBinds
+  :: Data d
+  => M.Map Name Exp -> S.Set Name -> d
+  -> (M.Map Name Exp, S.Set Name, d)
 renameBinds subst bv d = (subst', bv', d') where
     (d', (subst', bv', _)) = runState (go d) (subst, bv, M.empty)
 
-    go, base :: Data d => d -> State (M.Map Name Exp, S.Set Name, M.Map Name Name) d
+    go, base
+      :: Data d
+      => d -> State (M.Map Name Exp, S.Set Name, M.Map Name Name) d
     go = base `extM` pat `extM` match `extM` decl `extM` exp
-    base d = gmapM go d
+    base d'' = gmapM go d''
 
     pat (PVar name) = PVar `fmap` rename name
-    pat d = base d
+    pat d''          = base d''
 
-    match (Match name ps exp bs) = do
+    match (Match name ps exp' bs) = do
         name' <- rename name
-        return $ Match name' ps exp bs
+        return $ Match name' ps exp' bs
+    match _                       = error "unexpected"
 
-    decl (PatBind pat exp bs) = do
-        pat' <- go pat
-        return $ PatBind pat' exp bs
-    decl d = base d
+    decl (PatBind pat' exp' bs) = do
+        pat'' <- go pat'
+        return $ PatBind pat'' exp' bs
+    decl d'' = base d''
 
     exp (e :: Exp) = return e
 
     rename :: Name -> State (M.Map Name Exp, S.Set Name, M.Map Name Name) Name
     rename name = do
-        (subst, bv, ass) <- get
-        case (name `M.lookup` ass, name `S.member` bv) of
+        (subst'', bv'', ass) <- get
+        case (name `M.lookup` ass, name `S.member` bv'') of
             (Just name', _) -> do
                  return name'
             (_, False) -> do
-                put (M.delete name subst, S.insert name bv, ass)
+                put (M.delete name subst'', S.insert name bv'', ass)
                 return name
             _ -> do
-                let name' = freshNameAvoiding name bv
-                put (M.insert name (Var (UnQual name')) subst,
-                     S.insert name' bv, M.insert name name' ass)
+                let name' = freshNameAvoiding name bv''
+                put (M.insert name (Var (UnQual name')) subst'',
+                     S.insert name' bv'', M.insert name name' ass)
                 return name'
 
 -- generate fresh names
@@ -141,9 +161,11 @@ freshNameAvoiding name forbidden  = con (pre ++ suf) where
     (con, nm, cs) = case name of
          Ident  n -> (Ident,  n, "0123456789")
          Symbol n -> (Symbol, n, "?#")
+         _        -> error "unexpected"
     pre = reverse . dropWhile (`elem` cs) . reverse $ nm
     sufs = [1..] >>= flip replicateM cs
-    suf = head $ dropWhile (\suf -> con (pre ++ suf) `S.member` forbidden) sufs
+    suf = head $ dropWhile (\suff -> con (pre ++ suff) `S.member` forbidden)
+          sufs
 
 ---- Optimization (removing explicit lambdas) and restoration of infix ops ----
 
@@ -260,10 +282,14 @@ combinators :: M.Map Name Exp
 combinators = M.fromList $ map declToTuple defs
   where defs = case parseModule combinatorModule of
           ParseOk (Hs.Module _ _ _ d) -> d
-          f@(ParseFailed _ _) -> error ("Combinator loading: " ++ show f)
+          ParseOk _                   -> error "unexpected"
+          f@(ParseFailed _ _)         -> error
+                                         ("Combinator loading: " ++ show f)
         declToTuple (PatBind (PVar fname) (UnGuardedRhs body) Nothing)
           = (fname, Paren body)
-        declToTuple _ = error "Pointful Plugin error: can't convert declaration to tuple"
+        declToTuple _
+          = error
+            "Pointful Plugin error: can't convert declaration to tuple"
 
 combinatorModule :: String
 combinatorModule = unlines [
