@@ -1,0 +1,4 @@
+packages: .
+
+package pointful
+    ghc-options: -Wall -Werror
