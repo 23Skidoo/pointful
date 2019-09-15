@@ -336,7 +336,7 @@ optimizeOnce x = everywhere
 optimize :: (Eq a, Data a) => a -> a
 optimize = stabilize optimizeOnce
 
-pointful :: String -> String
+pointful :: String -> Either String String
 pointful =
   withParsed
   (stabilize (optimize . uncomb) . stabilize (unfoldCombinators . uncomb))

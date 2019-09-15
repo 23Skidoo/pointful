@@ -1,8 +1,8 @@
 module Main
     where
 
-import Data.List (intersperse)
 import System.Environment (getArgs)
+import System.Exit (die)
 
 import Lambdabot.Pointful (pointful)
 
@@ -12,8 +12,9 @@ printUsage = putStrLn "Usage: pointful QUERY"
 
 main :: IO ()
 main = do
-  query <- getArgs
-  if null query
-    then printUsage
-    else let query' = concat . intersperse " " $ query
-         in putStrLn $ pointful query'
+    query <- getArgs
+    if null query
+        then printUsage
+        else case pointful $ unwords query of
+            (Left  err) -> die err
+            (Right res) -> putStrLn res
