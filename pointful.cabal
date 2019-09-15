@@ -1,5 +1,5 @@
 name:                pointful
-version:             1.0.11.0
+version:             1.1.0.0
 
 synopsis:            Pointful refactoring tool
 
@@ -26,7 +26,7 @@ Source-repository head
 Source-repository this
   type:     git
   location: https://github.com/23Skidoo/pointful.git
-  tag:      pointful-1.0.11.0
+  tag:      pointful-1.1.0.0
 
 Library
     default-language:    Haskell2010
