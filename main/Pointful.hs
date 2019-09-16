@@ -2,7 +2,8 @@ module Main
     where
 
 import System.Environment (getArgs)
-import System.Exit (die)
+import System.IO (hPutStrLn, stderr)
+import System.Exit (exitFailure)
 
 import Lambdabot.Pointful (pointful)
 
@@ -16,5 +17,5 @@ main = do
     if null query
         then printUsage
         else case pointful $ unwords query of
-            (Left  err) -> die err
+            (Left  err) -> hPutStrLn stderr err >> exitFailure
             (Right res) -> putStrLn res
